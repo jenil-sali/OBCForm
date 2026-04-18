@@ -21,13 +21,24 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Invalid form data.' });
     }
 
-    // Fix: Vercel stores env vars with literal \n — replace with real newlines
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+    // Fix: handle both literal \n and actual newlines from Vercel
+    const rawKey = process.env.GOOGLE_PRIVATE_KEY || '';
+    const privateKey = rawKey.split(String.fromCharCode(92, 110)).join('\n');
+
+    // Debug info - remove once working
+    const keyDebug = {
+      length: rawKey.length,
+      firstChars: rawKey.substring(0, 50),
+      lastChars: rawKey.substring(rawKey.length - 50),
+      hasRealNewlines: rawKey.indexOf('\n') !== -1,
+      startsCorrectly: rawKey.replace(/^"/, '').startsWith('-----BEGIN'),
+    };
+    console.log('Key debug:', JSON.stringify(keyDebug));
 
     // Authenticate with Google
     const serviceAccountAuth = new JWT({
       email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: privateKey,
+      key: privateKey.replace(/^"|"$/g, ''),  // strip surrounding quotes if pasted wrong
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
@@ -74,6 +85,7 @@ export default async function handler(req, res) {
       message: 'ડેટા સ્પ્રેડSheeT માં ઉમેરવામાં ભૂલ આવી. ફરી પ્રયાસ કરો.',
       error: error.message,
       errorCode: error.code || error.status || null,
+      keyDebug: { length: (process.env.GOOGLE_PRIVATE_KEY||'').length, first30: (process.env.GOOGLE_PRIVATE_KEY||'').substring(0,30) },
     });
   }
 }
