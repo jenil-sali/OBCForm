@@ -69,7 +69,7 @@ export default function MemberCard({ index, register, errors, onRemove, canRemov
             className={`${styles.select} ${err('sex') ? styles.inputError : ''}`}
             {...register(field('sex'), { required: 'લિંગ પસંદ કરો' })}
           >
-            <option value="">-- પ્સ્ંદ કરો --</option>
+            <option value="">-- પસંદ કરો --</option>
             {SEX_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
           </select>
           {err('sex') && <span className={styles.errorMsg}>{err('sex').message}</span>}
@@ -84,7 +84,7 @@ export default function MemberCard({ index, register, errors, onRemove, canRemov
             className={`${styles.select} ${err('maritalStatus') ? styles.inputError : ''}`}
             {...register(field('maritalStatus'), { required: 'વૈવાહિક સ્થિતિ પસંદ કરો' })}
           >
-            <option value="">-- પ્સ્ંદ કરો --</option>
+            <option value="">-- પસંદ કરો --</option>
             {MARITAL_STATUS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
           </select>
           {err('maritalStatus') && <span className={styles.errorMsg}>{err('maritalStatus').message}</span>}
@@ -99,7 +99,7 @@ export default function MemberCard({ index, register, errors, onRemove, canRemov
             className={`${styles.select} ${err('homeSituation') ? styles.inputError : ''}`}
             {...register(field('homeSituation'), { required: 'ઘર ની પરિસ્થિતિ પસંદ કરો' })}
           >
-            <option value="">-- પ્સ્ંદ કરો --</option>
+            <option value="">-- પસંદ કરો --</option>
             {HOME_SITUATION.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
           </select>
           {err('homeSituation') && <span className={styles.errorMsg}>{err('homeSituation').message}</span>}
@@ -135,7 +135,7 @@ export default function MemberCard({ index, register, errors, onRemove, canRemov
             className={`${styles.select} ${err('occupation') ? styles.inputError : ''}`}
             {...register(field('occupation'), { required: 'વ્યવસાય પસંદ કરો' })}
           >
-            <option value="">-- પ્સ્ંદ કરો --</option>
+            <option value="">-- પસંદ કરો --</option>
             {OCCUPATION.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
           </select>
           {err('occupation') && <span className={styles.errorMsg}>{err('occupation').message}</span>}
@@ -161,7 +161,7 @@ export default function MemberCard({ index, register, errors, onRemove, canRemov
             className={`${styles.select} ${err('education') ? styles.inputError : ''}`}
             {...register(field('education'), { required: 'શિક્ષણ પસંદ કરો' })}
           >
-            <option value="">-- પ્સ્ંદ કરો --</option>
+            <option value="">-- પસંદ કરો --</option>
             {EDUCATION.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
           </select>
           {err('education') && <span className={styles.errorMsg}>{err('education').message}</span>}

@@ -185,7 +185,7 @@ export default function Home() {
                 <label className={styles.label}>વિભાગ <span className={styles.req}>*</span></label>
                 <select className={`${styles.select} ${errors.department ? styles.inputError : ''}`}
                   {...register('department', { required: 'વિભાગ પસંદ કરો' })}>
-                  <option value="">-- વિભાગ પ્સ્ંદ કરો --</option>
+                  <option value="">-- વિભાગ પસંદ કરો --</option>
                   {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
                 {errors.department && <span className={styles.err}>{errors.department.message}</span>}
