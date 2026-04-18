@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useWatch } from 'react-hook-form';
 import styles from './MemberCard.module.css';
 import {
   SEX_OPTIONS,
@@ -7,9 +9,36 @@ import {
   EDUCATION,
 } from '../lib/constants';
 
-export default function MemberCard({ index, register, errors, onRemove, canRemove }) {
+// Max selectable DOB: 01 Apr 2026
+const MAX_DOB = '2026-04-01';
+const MAX_DATE = new Date('2026-04-01');
+
+// Returns true if the person is under 3 years old relative to 01 Apr 2026
+function isUnder3Years(dobString) {
+  if (!dobString) return false;
+  const dob = new Date(dobString);
+  if (isNaN(dob.getTime())) return false;
+  const diffMs = MAX_DATE - dob;
+  const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+  return diffYears < 3;
+}
+
+export default function MemberCard({ index, register, control, setValue, errors, onRemove, canRemove }) {
   const field = (name) => `members.${index}.${name}`;
   const err = (name) => errors?.members?.[index]?.[name];
+
+  // Watch DOB to conditionally hide education
+  const dobValue = useWatch({ control, name: field('dob') });
+  const hideEducation = isUnder3Years(dobValue);
+
+  // When fields are hidden (child under 3 yrs), clear their values so blank is sent to API
+  useEffect(() => {
+    if (hideEducation) {
+      setValue(field('education'), '', { shouldValidate: false });
+      setValue(field('occupation'), '', { shouldValidate: false });
+      setValue(field('jobName'), '', { shouldValidate: false });
+    }
+  }, [hideEducation]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={`${styles.card} ${index === 0 ? styles.cardHead : ''}`}>
@@ -113,59 +142,65 @@ export default function MemberCard({ index, register, errors, onRemove, canRemov
           <input
             type="date"
             className={`${styles.input} ${err('dob') ? styles.inputError : ''}`}
-            max={new Date().toISOString().split('T')[0]}
+            max={MAX_DOB}
             {...register(field('dob'), {
               required: 'જન્મ તારીખ અનિવાર્ય છે',
               validate: (v) => {
                 const birthDate = new Date(v);
-                const today = new Date();
-                return birthDate < today || 'ભવિષ્ય ની તારીખ ન ભરો';
+                return birthDate <= MAX_DATE || `01 Apr 2026 પછી ની તારીખ ન ભરો`;
               },
             })}
           />
           {err('dob') && <span className={styles.errorMsg}>{err('dob').message}</span>}
         </div>
 
-        {/* Occupation */}
-        <div className={styles.fieldGroup}>
-          <label className={styles.label}>
-            વ્યવસાય / નોકરી <span className={styles.required}>*</span>
-          </label>
-          <select
-            className={`${styles.select} ${err('occupation') ? styles.inputError : ''}`}
-            {...register(field('occupation'), { required: 'વ્યવસાય પસંદ કરો' })}
-          >
-            <option value="">-- પસંદ કરો --</option>
-            {OCCUPATION.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-          {err('occupation') && <span className={styles.errorMsg}>{err('occupation').message}</span>}
-        </div>
+        {/* Occupation — hidden for children under 3 years */}
+        {!hideEducation && (
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>
+              વ્યવસાય / નોકરી <span className={styles.required}>*</span>
+            </label>
+            <select
+              className={`${styles.select} ${err('occupation') ? styles.inputError : ''}`}
+              {...register(field('occupation'), { required: 'વ્યવસાય પસંદ કરો' })}
+            >
+              <option value="">-- પસંદ કરો --</option>
+              {OCCUPATION.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+            {err('occupation') && <span className={styles.errorMsg}>{err('occupation').message}</span>}
+          </div>
+        )}
 
-        {/* Job / Business Name */}
-        <div className={styles.fieldGroup}>
-          <label className={styles.label}>નોકરી / વ્યવસાય નું નામ</label>
-          <input
-            type="text"
-            className={styles.input}
-            placeholder="નોકરી અથવા વ્યવસાય નું નામ (વૈકલ્પિક)"
-            {...register(field('jobName'))}
-          />
-        </div>
+        {/* Job / Business Name — hidden for children under 3 years */}
+        {!hideEducation && (
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>નોકરી / વ્યવસાય નું નામ</label>
+            <input
+              type="text"
+              className={styles.input}
+              placeholder="નોકરી અથવા વ્યવસાય નું નામ (વૈકલ્પિક)"
+              {...register(field('jobName'))}
+            />
+          </div>
+        )}
 
-        {/* Education */}
-        <div className={styles.fieldGroup}>
-          <label className={styles.label}>
-            શિક્ષણ <span className={styles.required}>*</span>
-          </label>
-          <select
-            className={`${styles.select} ${err('education') ? styles.inputError : ''}`}
-            {...register(field('education'), { required: 'શિક્ષણ પસંદ કરો' })}
-          >
-            <option value="">-- પસંદ કરો --</option>
-            {EDUCATION.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-          {err('education') && <span className={styles.errorMsg}>{err('education').message}</span>}
-        </div>
+        {/* Education — hidden for children under 3 years (DOB within 3 yrs of 01 Apr 2026) */}
+        {!hideEducation && (
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>
+              શિક્ષણ <span className={styles.required}>*</span>
+            </label>
+            <select
+              className={`${styles.select} ${err('education') ? styles.inputError : ''}`}
+              {...register(field('education'), { required: 'શિક્ષણ પસંદ કરો' })}
+            >
+              <option value="">-- પસંદ કરો --</option>
+              {EDUCATION.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+            {err('education') && <span className={styles.errorMsg}>{err('education').message}</span>}
+          </div>
+        )}
+
 
         {/* Caste */}
         <div className={`${styles.fieldGroup} ${styles.fullWidth}`}>

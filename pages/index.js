@@ -18,6 +18,7 @@ export default function Home() {
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -109,10 +110,9 @@ export default function Home() {
 
               {/* Email */}
               <div className={`${styles.fieldGroup} ${styles.fullWidth}`}>
-                <label className={styles.label}>ઈ-મેઇલ <span className={styles.req}>*</span></label>
+                <label className={styles.label}>ઈ-મેઇલ</label>
                 <input type="email" className={`${styles.input} ${errors.email ? styles.inputError : ''}`} placeholder="example@gmail.com"
                   {...register('email', {
-                    required: 'ઈ-મેઇલ અનિવાર્ય છે',
                     pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'માન્ય ઈ-મેઇલ સરનામું ભરો' }
                   })} />
                 {errors.email && <span className={styles.err}>{errors.email.message}</span>}
@@ -205,10 +205,12 @@ export default function Home() {
             </div>
 
             {fields.map((field, index) => (
-              <MemberCard
+            <MemberCard
                 key={field.id}
                 index={index}
                 register={register}
+                control={control}
+                setValue={setValue}
                 errors={errors}
                 onRemove={remove}
                 canRemove={fields.length > 1}
