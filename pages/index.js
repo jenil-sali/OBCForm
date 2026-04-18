@@ -91,10 +91,19 @@ export default function Home() {
           </div>
           <h1 className={styles.heroTitle}>અખિલ ગુજરાત ક્રિયા કમિટી</h1>
           <p className={styles.heroSubtitle}>OBC ડેટા ગુજરાત — પરિવાર માહિતી ફોર્મ</p>
-          <p className={styles.heroDesc}>ઘરના તમામ વ્યક્તિના ફોર્મ ભરવા. આંકડા અંગ્રેજીમાં ભરવા.</p>
+          {/* <p className={styles.heroDesc}>ઘરના તમામ વ્યક્તિના ફોર્મ ગુજરાતી માં ભરવા. આંકડા અંગ્રેજીમાં ભરવા.</p> */}
         </div>
 
         <form className={styles.formContainer} onSubmit={handleSubmit(onSubmit)} noValidate>
+
+          {/* ===== NOTE BANNER ===== */}
+          <div className={styles.noteBanner}>
+            <span className={styles.noteIcon}>📌</span>
+            <p className={styles.noteText}>
+              <strong>નોંધ&nbsp;:&nbsp;</strong>
+              ઘરના તમામ વ્યક્તિના ફોર્મ <b>ગુજરાતી</b> માં ભરવા. આંકડા <b>અંગ્રેજી</b>માં ભરવા.
+            </p>
+          </div>
 
           {/* ===== COMMON DETAILS SECTION ===== */}
           <section className={styles.section}>
@@ -205,7 +214,7 @@ export default function Home() {
             </div>
 
             {fields.map((field, index) => (
-            <MemberCard
+              <MemberCard
                 key={field.id}
                 index={index}
                 register={register}
