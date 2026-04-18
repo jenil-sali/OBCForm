@@ -69,7 +69,8 @@ export default async function handler(req, res) {
     return res.status(500).json({
       success: false,
       message: 'ડેટા સ્પ્રેડશીટ માં ઉમેરવામાં ભૂલ આવી. ફરી પ્રયાસ કરો.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      error: error.message,
+      errorCode: error.code || error.status || null,
     });
   }
 }
