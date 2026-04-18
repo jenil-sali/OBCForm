@@ -21,10 +21,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Invalid form data.' });
     }
 
+    // Fix: Vercel stores env vars with literal \n — replace with real newlines
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+
     // Authenticate with Google
     const serviceAccountAuth = new JWT({
       email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      key: privateKey,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
@@ -44,7 +47,7 @@ export default async function handler(req, res) {
       'House No (ઘર નંબર)': commonDetails.houseNo || '',
       'Society (સોસાયટી નું નામ)': commonDetails.society || '',
       'District (જિલ્લો)': commonDetails.district || '',
-      'Taluka (તાલુકો)': commonDetails.taluka || '',
+      'Taluka (તાલુKo)': commonDetails.taluka || '',
       'Village/Ward (ગામ/વોર્ડ)': commonDetails.village || '',
       'Department (વિભાગ)': commonDetails.department || '',
       'Head of Family (ઘર નો મુખ્ય સભ્ય)': headMemberName || '',
@@ -68,7 +71,7 @@ export default async function handler(req, res) {
     console.error('Google Sheets API Error:', error);
     return res.status(500).json({
       success: false,
-      message: 'ડેટા સ્પ્રેડશીટ માં ઉમેરવામાં ભૂલ આવી. ફરી પ્રયાસ કરો.',
+      message: 'ડેટા સ્પ્રેડSheeT માં ઉમેરવામાં ભૂલ આવી. ફરી પ્રયાસ કરો.',
       error: error.message,
       errorCode: error.code || error.status || null,
     });
