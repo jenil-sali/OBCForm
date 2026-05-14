@@ -23,7 +23,7 @@ function isUnder3Years(dobString) {
   return diffYears < 3;
 }
 
-export default function MemberCard({ index, register, control, setValue, errors, onRemove, canRemove }) {
+export default function MemberCard({ index, register, control, setValue, errors, onRemove, canRemove, isReadOnly }) {
   const field = (name) => `members.${index}.${name}`;
   const err = (name) => errors?.members?.[index]?.[name];
 
@@ -85,6 +85,7 @@ export default function MemberCard({ index, register, control, setValue, errors,
               required: 'સભ્ય નું પૂરું નામ અનિવાર્ય છે',
               minLength: { value: 2, message: 'નામ ઓછામાં ઓછા 2 અક્ષર નું હોવું જોઈએ' },
             })}
+            disabled={isReadOnly}
           />
           {err('fullName') && <span className={styles.errorMsg}>{err('fullName').message}</span>}
         </div>
@@ -97,6 +98,7 @@ export default function MemberCard({ index, register, control, setValue, errors,
           <select
             className={`${styles.select} ${err('sex') ? styles.inputError : ''}`}
             {...register(field('sex'), { required: 'લિંગ પસંદ કરો' })}
+            disabled={isReadOnly}
           >
             <option value="">-- પસંદ કરો --</option>
             {SEX_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -112,6 +114,7 @@ export default function MemberCard({ index, register, control, setValue, errors,
           <select
             className={`${styles.select} ${err('maritalStatus') ? styles.inputError : ''}`}
             {...register(field('maritalStatus'), { required: 'વૈવાહિક સ્થિતિ પસંદ કરો' })}
+            disabled={isReadOnly}
           >
             <option value="">-- પસંદ કરો --</option>
             {MARITAL_STATUS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -127,6 +130,7 @@ export default function MemberCard({ index, register, control, setValue, errors,
           <select
             className={`${styles.select} ${err('homeSituation') ? styles.inputError : ''}`}
             {...register(field('homeSituation'), { required: 'ઘર ની પરિસ્થિતિ પસંદ કરો' })}
+            disabled={isReadOnly}
           >
             <option value="">-- પસંદ કરો --</option>
             {HOME_SITUATION.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -150,6 +154,7 @@ export default function MemberCard({ index, register, control, setValue, errors,
                 return birthDate <= MAX_DATE || `01 Apr 2026 પછી ની તારીખ ન ભરો`;
               },
             })}
+            disabled={isReadOnly}
           />
           {err('dob') && <span className={styles.errorMsg}>{err('dob').message}</span>}
         </div>
@@ -163,6 +168,7 @@ export default function MemberCard({ index, register, control, setValue, errors,
             <select
               className={`${styles.select} ${err('occupation') ? styles.inputError : ''}`}
               {...register(field('occupation'), { required: 'વ્યવસાય પસંદ કરો' })}
+              disabled={isReadOnly}
             >
               <option value="">-- પસંદ કરો --</option>
               {OCCUPATION.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -180,6 +186,7 @@ export default function MemberCard({ index, register, control, setValue, errors,
               className={styles.input}
               placeholder="નોકરી અથવા વ્યવસાય નું નામ (વૈકલ્પિક)"
               {...register(field('jobName'))}
+              disabled={isReadOnly}
             />
           </div>
         )}
@@ -193,6 +200,7 @@ export default function MemberCard({ index, register, control, setValue, errors,
             <select
               className={`${styles.select} ${err('education') ? styles.inputError : ''}`}
               {...register(field('education'), { required: 'શિક્ષણ પસંદ કરો' })}
+              disabled={isReadOnly}
             >
               <option value="">-- પસંદ કરો --</option>
               {EDUCATION.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -214,6 +222,7 @@ export default function MemberCard({ index, register, control, setValue, errors,
             {...register(field('caste'), {
               required: 'જ્ઞાતિ અનિવાર્ય છે',
             })}
+            disabled={isReadOnly}
           />
           {err('caste') && <span className={styles.errorMsg}>{err('caste').message}</span>}
         </div>

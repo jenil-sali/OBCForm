@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useState, useCallback } from 'react';
 import MemberCard from '../components/MemberCard';
+import SearchPopup from '../components/SearchPopup';
 import PageLoader from '../components/PageLoader';
 import Toast from '../components/Toast';
 import { DEPARTMENTS, DEFAULT_MEMBER } from '../lib/constants';
@@ -9,7 +10,11 @@ import styles from '../styles/Home.module.css';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
+  const [loaderMessage, setLoaderMessage] = useState('ડેટા સ્ટોર થઈ રહ્યો છે...');
   const [toast, setToast] = useState(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const [fetchedRef, setFetchedRef] = useState(false);
+  const [isSearchPopupOpen, setIsSearchPopupOpen] = useState(false);
 
   const dismissToast = useCallback(() => setToast(null), []);
 
@@ -37,7 +42,56 @@ export default function Home() {
 
   const { fields, append, remove } = useFieldArray({ control, name: 'members' });
 
+  const handleFetchData = async (type, value) => {
+    if (fetchedRef) return;
+    if (!value) return;
+    
+    if (type === 'mobile' && !/^[6-9]\d{9}$/.test(value)) return;
+    if (type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return;
+
+    setLoaderMessage('માહિતી શોધાઈ રહી છે...');
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/fetch-data?${type}=${encodeURIComponent(value)}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        setFetchedRef(true);
+        setIsReadOnly(true);
+        setIsSearchPopupOpen(false);
+        const { commonDetails, familyMembers } = json.data;
+        
+        setValue('email', commonDetails.email);
+        setValue('mobile', commonDetails.mobile);
+        setValue('headName', commonDetails.headName);
+        setValue('houseNo', commonDetails.houseNo);
+        setValue('society', commonDetails.society);
+        setValue('district', commonDetails.district);
+        setValue('taluka', commonDetails.taluka);
+        setValue('village', commonDetails.village);
+        setValue('department', commonDetails.department);
+        
+        setValue('members', familyMembers);
+        
+        setToast({ message: 'માહિતી મળી ગઈ. આ માહિતી જોઈ શકાય છે પણ ફેરફાર કરી શકાશે નહીં.', type: 'success' });
+      } else {
+        setToast({ message: json.message || 'માહિતી મળી નથી.', type: 'error' });
+      }
+    } catch (e) {
+      console.error(e);
+      setToast({ message: 'ભૂલ આવી છે.', type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetForm = () => {
+    reset();
+    setIsReadOnly(false);
+    setFetchedRef(false);
+  };
+
   const onSubmit = async (data) => {
+    setLoaderMessage('ડેટા સ્ટોર થઈ રહ્યો છે...');
     setIsLoading(true);
     setToast(null);
     try {
@@ -72,7 +126,14 @@ export default function Home() {
   return (
     <>
       {/* Page Loader Overlay */}
-      {isLoading && <PageLoader />}
+      {isLoading && <PageLoader message={loaderMessage} />}
+
+      {/* Search Popup */}
+      <SearchPopup 
+        isOpen={isSearchPopupOpen} 
+        onClose={() => setIsSearchPopupOpen(false)} 
+        onSearch={handleFetchData} 
+      />
 
       {/* Toast Notification */}
       {toast && <Toast message={toast.message} type={toast.type} onClose={dismissToast} />}
@@ -91,7 +152,19 @@ export default function Home() {
           </div>
           <h1 className={styles.heroTitle}>અખિલ ગુજરાત ક્રિયા કમિટી</h1>
           <p className={styles.heroSubtitle}>OBC ડેટા ગુજરાત — પરિવાર માહિતી ફોર્મ</p>
-          {/* <p className={styles.heroDesc}>ઘરના તમામ વ્યક્તિના ફોર્મ ગુજરાતી માં ભરવા. આંકડા અંગ્રેજીમાં ભરવા.</p> */}
+          
+          {!isReadOnly && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '15px' }}>
+              <button 
+                type="button" 
+                className={styles.submitBtn} 
+                onClick={() => setIsSearchPopupOpen(true)}
+                style={{ width: 'auto', padding: '12px 28px', fontSize: '16px' }}
+              >
+                🔍 Find the data
+              </button>
+            </div>
+          )}
         </div>
 
         <form className={styles.formContainer} onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -123,7 +196,9 @@ export default function Home() {
                 <input type="email" className={`${styles.input} ${errors.email ? styles.inputError : ''}`} placeholder="example@gmail.com"
                   {...register('email', {
                     pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'માન્ય ઈ-મેઇલ સરનામું ભરો' }
-                  })} />
+                  })}
+                  disabled={isReadOnly}
+                />
                 {errors.email && <span className={styles.err}>{errors.email.message}</span>}
               </div>
 
@@ -134,7 +209,9 @@ export default function Home() {
                   {...register('mobile', {
                     required: 'મોબાઈલ નંબર અનિવાર્ય છે',
                     pattern: { value: /^[6-9]\d{9}$/, message: '10 અંકનો માન્ય ભારતીય મોબાઈલ નંબર ભરો' }
-                  })} />
+                  })}
+                  disabled={isReadOnly}
+                />
                 {errors.mobile && <span className={styles.err}>{errors.mobile.message}</span>}
               </div>
 
@@ -145,7 +222,9 @@ export default function Home() {
                   {...register('headName', {
                     required: 'ઘર ના મુખ્ય સભ્ય નું નામ અનિવાર્ય છે',
                     minLength: { value: 2, message: 'નામ ઓછામાં ઓછા 2 અક્ષર નું હોવું જોઈએ' },
-                  })} />
+                  })} 
+                  disabled={isReadOnly}
+                />
                 {errors.headName && <span className={styles.err}>{errors.headName.message}</span>}
               </div>
 
@@ -153,7 +232,9 @@ export default function Home() {
               <div className={styles.fieldGroup}>
                 <label className={styles.label}>ઘર નંબર <span className={styles.req}>*</span></label>
                 <input type="text" className={`${styles.input} ${errors.houseNo ? styles.inputError : ''}`} placeholder="House No. (English numbers)"
-                  {...register('houseNo', { required: 'ઘર નંબર અનિવાર્ય છે' })} />
+                  {...register('houseNo', { required: 'ઘર નંબર અનિવાર્ય છે' })} 
+                  disabled={isReadOnly}
+                />
                 {errors.houseNo && <span className={styles.err}>{errors.houseNo.message}</span>}
               </div>
 
@@ -161,7 +242,9 @@ export default function Home() {
               <div className={styles.fieldGroup}>
                 <label className={styles.label}>સોસાયટી નું નામ <span className={styles.req}>*</span></label>
                 <input type="text" className={`${styles.input} ${errors.society ? styles.inputError : ''}`} placeholder="સોસાયટી / વિસ્તાર નું નામ"
-                  {...register('society', { required: 'સોસાયટી નું નામ અનિવાર્ય છે' })} />
+                  {...register('society', { required: 'સોસાયટી નું નામ અનિવાર્ય છે' })} 
+                  disabled={isReadOnly}
+                />
                 {errors.society && <span className={styles.err}>{errors.society.message}</span>}
               </div>
 
@@ -169,7 +252,9 @@ export default function Home() {
               <div className={styles.fieldGroup}>
                 <label className={styles.label}>જિલ્લો <span className={styles.req}>*</span></label>
                 <input type="text" className={`${styles.input} ${errors.district ? styles.inputError : ''}`} placeholder="જિલ્લો"
-                  {...register('district', { required: 'જિલ્લો અનિવાર્ય છે' })} />
+                  {...register('district', { required: 'જિલ્લો અનિવાર્ય છે' })} 
+                  disabled={isReadOnly}
+                />
                 {errors.district && <span className={styles.err}>{errors.district.message}</span>}
               </div>
 
@@ -177,7 +262,9 @@ export default function Home() {
               <div className={styles.fieldGroup}>
                 <label className={styles.label}>તાલુકો <span className={styles.req}>*</span></label>
                 <input type="text" className={`${styles.input} ${errors.taluka ? styles.inputError : ''}`} placeholder="તાલુકો"
-                  {...register('taluka', { required: 'તાલુકો અનિવાર્ય છે' })} />
+                  {...register('taluka', { required: 'તાલુકો અનિવાર્ય છે' })} 
+                  disabled={isReadOnly}
+                />
                 {errors.taluka && <span className={styles.err}>{errors.taluka.message}</span>}
               </div>
 
@@ -185,7 +272,9 @@ export default function Home() {
               <div className={styles.fieldGroup}>
                 <label className={styles.label}>ગામ / વોર્ડ નું નામ <span className={styles.req}>*</span></label>
                 <input type="text" className={`${styles.input} ${errors.village ? styles.inputError : ''}`} placeholder="ગામ અથવા વોર્ડ નું નામ"
-                  {...register('village', { required: 'ગામ / વોર્ડ અનિવાર્ય છે' })} />
+                  {...register('village', { required: 'ગામ / વોર્ડ અનિવાર્ય છે' })} 
+                  disabled={isReadOnly}
+                />
                 {errors.village && <span className={styles.err}>{errors.village.message}</span>}
               </div>
 
@@ -193,7 +282,9 @@ export default function Home() {
               <div className={`${styles.fieldGroup} ${styles.fullWidth}`}>
                 <label className={styles.label}>વિભાગ <span className={styles.req}>*</span></label>
                 <select className={`${styles.select} ${errors.department ? styles.inputError : ''}`}
-                  {...register('department', { required: 'વિભાગ પસંદ કરો' })}>
+                  {...register('department', { required: 'વિભાગ પસંદ કરો' })}
+                  disabled={isReadOnly}
+                >
                   <option value="">-- વિભાગ પસંદ કરો --</option>
                   {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
@@ -222,27 +313,36 @@ export default function Home() {
                 setValue={setValue}
                 errors={errors}
                 onRemove={remove}
-                canRemove={fields.length > 1}
+                canRemove={fields.length > 1 && !isReadOnly}
+                isReadOnly={isReadOnly}
               />
             ))}
 
             {/* Add Member Button */}
-            <button type="button" className={styles.addBtn} onClick={addMember}>
-              <span className={styles.addBtnIcon}>＋</span>
-              <span>બીજા સભ્ય ઉમેરો</span>
-            </button>
+            {!isReadOnly && (
+              <button type="button" className={styles.addBtn} onClick={addMember}>
+                <span className={styles.addBtnIcon}>＋</span>
+                <span>બીજા સભ્ય ઉમેરો</span>
+              </button>
+            )}
           </section>
 
           {/* Status messages replaced by Toast + PageLoader (see top of return) */}
 
           {/* ===== SUBMIT ===== */}
-          <button type="submit" className={styles.submitBtn} disabled={isLoading}>
-            {isLoading ? (
-              <><span className={styles.spinner} /> ડેટા સ્ટોર થઈ રહ્યો છે...</>
-            ) : (
-              <><span>📤</span> ફોર્મ સબમિટ કરો</>
-            )}
-          </button>
+          {!isReadOnly ? (
+            <button type="submit" className={styles.submitBtn} disabled={isLoading}>
+              {isLoading ? (
+                <><span className={styles.spinner} /> ડેટા સ્ટોર થઈ રહ્યો છે...</>
+              ) : (
+                <><span>📤</span> ફોર્મ સબમિટ કરો</>
+              )}
+            </button>
+          ) : (
+            <button type="button" className={styles.submitBtn} onClick={handleResetForm} style={{ backgroundColor: '#28a745' }}>
+              <span>🔄</span> Submit another form
+            </button>
+          )}
 
         </form>
 
